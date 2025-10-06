@@ -23,3 +23,55 @@ lead-engine/
   workflows/
     crawl.yml           # GitHub Actions: nightly crawl
 README.md
+
+
+
+
+DB_URL=postgres://user:pass@host:5432/postgres
+SLACK_WEBHOOK_URL=...
+SENDGRID_API_KEY=...
+ALLOWED_DOMAINS=educause.edu,higheredjobs.com,opengov.com,bonfirehub.com
+CLASSIFIER_THRESHOLD=0.6
+
+
+
+playwright
+pydantic
+psycopg[binary]
+requests
+python-slugify
+tqdm
+
+
+crawler/Dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt && playwright install --with-deps chromium
+COPY . .
+CMD ["python", "run_all.py"]
+
+
+
+import asyncio, os
+from sources.educause import scrape as scrape_educause
+from sources.higheredjobs import scrape as scrape_higheredjobs
+from normalize import upsert_listings, dedupe
+from classify import score_and_tag
+
+async def main():
+    raw = []
+    for fn in [scrape_educause, scrape_higheredjobs]:
+        raw += await fn()
+    norm = [score_and_tag(r) for r in raw]
+    upsert_listings(norm)
+    dedupe()
+    # if high-score & deadline<7d: post Slack
+    from utils import notify
+    notify([r for r in norm if r["score"] >= 75])
+asyncio.run(main())
+
+
+
+
+
