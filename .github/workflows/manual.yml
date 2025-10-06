@@ -1,0 +1,25 @@
+lead-engine/
+  api/                  # FastAPI app
+    main.py
+    models.py
+    requirements.txt
+    Dockerfile
+  crawler/              # Playwright/requests jobs per source
+    sources/
+      educause.py
+      higheredjobs.py
+      nacubo.py
+      bonfire_generic.py
+    classify.py
+    normalize.py
+    requirements.txt
+    Dockerfile
+  web/                  # Next.js (dashboard)
+    package.json
+    app/
+  infra/
+    docker-compose.yml
+    .env.example
+  workflows/
+    crawl.yml           # GitHub Actions: nightly crawl
+README.md
